@@ -51,7 +51,7 @@ UART_READ_WAIT:
 		jr z,UART_READ_WAIT	;если буфер пустой то ждём
 		ld bc,UART_DAT		;читаем байт
 		in a,(c)
-		cp	10
+		cp	10		; тут acid пытался сделать проверку байта на канец пакета от ЕСП. Но не сработало
 		jr	nz,.skp1
 		ld	(hl),a
 		inc	hl
