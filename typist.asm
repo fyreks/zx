@@ -44,10 +44,8 @@ main
 	ld hl,esp_init
 	call UART_WRITE
 	
-	ld hl,buffer
-	exx
-	ld	bc,512
-	exx
+	ld	hl,buffer
+	ld	de,512
 	call UART_READ
 	push	hl
 
@@ -56,9 +54,7 @@ main
 	call	UART_WRITE
 
 	pop	hl
-	exx
-	ld	bc,255
-	exx
+	ld	DE,255
 	call	UART_READ
 	push	hl
 	
@@ -66,9 +62,7 @@ main
 	call	UART_WRITE
 	
 	pop	hl
-	exx
-	ld	bc,255
-	exx
+	ld	de,255
 	call	UART_READ
 	push	hl
 
@@ -76,9 +70,7 @@ main
 	call	UART_WRITE
 
 	pop	hl
-	exx
-	ld	bc,2048
-	exx
+	ld	de,2048
 	call	UART_READ
 	
 	ld	a,#ff
@@ -86,7 +78,7 @@ main
 	ei
 
 	call	init
-	ld	a,6
+	ld	a,6		; CLS screen
 	call	global
 
 ;	ld	de,#405f
@@ -96,7 +88,7 @@ main
 ;	call	global
 
 	ld	de,text
-	xor	a
+	xor	a			; Welcome text output
 	call	global
 
 ;	ld	de,c_coords
