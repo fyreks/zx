@@ -1,0 +1,2 @@
+..\sjasmplus typist.asm
+pause
