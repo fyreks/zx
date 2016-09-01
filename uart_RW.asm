@@ -76,9 +76,9 @@ UART_WRITE_WAIT:
 		jr z,UART_WRITE_WAIT	;если буфер непустой то ждём
 		ld bc,UART_DAT	;отсылаем байт
 		ld a,(hl)
+		inc hl
 		out (c),a
 		cp	10
 		ret	z
-		inc hl
 ;		dec de
 		jr UART_WRITE
