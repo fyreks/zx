@@ -2,13 +2,13 @@
 
 	org	$c000
 	
-screenaddr		EQU	$4000
+screenaddr	EQU	$4000
 scrsize		EQU	6144
-INK			EQU	$29
+INK		EQU	$29
 BORDER		EQU	5
 main
-	ret						; standart descriptor of zx library
-	db	"graphics library"		; name
+	ret						; standart descriptor of zx library - 29 bytes (#1D)
+	db	"graphics library"			; name
 	db	1,0					; $ver
 	dw	codeend-main			; library size
 	dw	init					; init procedure if needed
@@ -38,7 +38,8 @@ main
 ; 10 - move down whole screen
 ; 11 - move an area
 
-	; 				TEST block
+; 				TEST block
+test
 	di
 	call UART_INIT
 	ld hl,esp_init
@@ -49,6 +50,7 @@ main
 	call UART_READ
 	push	hl
 
+	call	wait10
 	
 	ld	hl,esp_ip
 	call	UART_WRITE
@@ -57,6 +59,7 @@ main
 	ld	DE,255
 	call	UART_READ
 	push	hl
+	call	wait10
 	
 	ld	hl,esp_list
 	call	UART_WRITE
@@ -65,13 +68,15 @@ main
 	ld	de,255
 	call	UART_READ
 	push	hl
-
+	call	wait10
+	
 	ld	hl,esp_send
 	call	UART_WRITE
 
 	pop	hl
 	ld	de,2048
 	call	UART_READ
+	call	wait10
 	
 	ld	a,#ff
 	ld	(hl),a
@@ -102,14 +107,16 @@ main
 ;	call	parse
 
 here
-		ld	de,buffer
-		xor	a
-		jp	global
+	ld	de,buffer
+	xor	a
+	jp	global
 	
 wait10
 	ld	b,20
+	ei
 .zz	halt
 	djnz	.zz
+	di
 	ret
 	
 ;	ld	de,c_coords
@@ -378,57 +385,57 @@ get_coords_char
 ;		halt
 ;		ret
 
-parse
-		ld	hl,buffer
-		ld	de,buffer2
-.stparse	ld	a,(hl)
-		inc	hl
-		cp	13
-		ret	z
-		cp	"<"
-		jr	nz,.skp1
-
-		nop			;here comes real parser
-
+;parse
+;		ld	hl,buffer
+;		ld	de,buffer2
+;.stparse	ld	a,(hl)
+;		inc	hl
+;		cp	13
+;		ret	z
+;		cp	"<"
+;		jr	nz,.skp1
+;
+;		nop			;here comes real parser
+;
+;;		ld	a,(hl)
+;;		or	4		; case up
+;;		some bla bla for links
+;
+;.skp1		ld	a,(hl)
+;		inc	hl
+;		cp	">"
+;		jr	nz,.skp1
+;.skp2		ldi
 ;		ld	a,(hl)
-;		or	4		; case up
-;		some bla bla for links
-
-.skp1		ld	a,(hl)
-		inc	hl
-		cp	">"
-		jr	nz,.skp1
-.skp2		ldi
-		ld	a,(hl)
-		cp	"<"
-		jr	nz,.skp2
-		ld	a,32
-		ld	(de),a 
-		jr	.stparse
+;		cp	"<"
+;		jr	nz,.skp2
+;		ld	a,32
+;		ld	(de),a 
+;		jr	.stparse
 
 		include	"uart_RW.asm"
 
 		
-text			db	$1B,0,0,"Franky's ESP Wi-Fi, $ver:0.01",$1b,22*8,0,"enter AT commands. Some times works хорошо",$1b,8,0,">", $ff
-scrpos		db 0,$40
+text		db	$1B,0,0,"Franky's ESP Wi-Fi, $ver:0.01",$1b,22*8,0,"enter AT commands. Some times works хорошо",$1b,8,0,">", $ff
+scrpos		db	0,$40
 subtbl		dw	puts,putc,plot,0,0,0,cls,0,get_coords_char
-c_coords		db	0,0
+c_coords	db	0,0
 ytable		include	"ytab.asm"
 xtable		include	"xtab.asm"
-font			include "6x8_1.asm"
+font		include "6x8_1.asm"
 
-esp_init		db	"ATE0",0x0d,0x0a
+esp_init	db	"AT",0x0d,0x0a
 esp_ip		db	'AT+CIPSTART="TCP","ru.wikipedia.ru",80',0x0d,0x0a	;40bytes
-esp_list		db	"AT+CIPSEND=39",$0d,$0a		;15 bytes
-esp_send		db	"GET /	HTTP/1.1 Host: ru.wikipedia.org",0x0d,0x0a,0xff ;39 bytes
+esp_list	db	"AT+CIPSEND=39",$0d,$0a		;15 bytes
+esp_send	db	"GET /	HTTP/1.1 Host: ru.wikipedia.org",0x0d,0x0a,0xff ;39 bytes
 buffer		block	2048,0x20
-buffer2		block 2048, 0x20
+;buffer2		block	2048,0x20
 
-			DISPLAY "data SIZE:",/A,buffer-esp_init
-			display	"buffer addr: ",/A,buffer
-			display "text placement",/A,here+1
-			
+		DISPLAY "data SIZE:",/A,buffer-esp_init
+		display	"buffer addr: ",/A,buffer
+		display "text placement",/A,here+1
+		display	"start	test here: ", /A, test
 codeend
-;	emptytrd	"1.trd"
-;	savetrd	"1.trd", "memlib.C", main, codeend-main
-	savetrd	"1.trd", "typist.C", main, codeend-main
+	emptytrd	"1.trd"
+;	savetrd		"1.trd", "memlib.C", main, codeend-main
+	savetrd		"1.trd", "typist.C", main, codeend-main
