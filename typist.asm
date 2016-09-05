@@ -1,6 +1,6 @@
 	DEVICE	ZXSPECTRUM128
 
-	org	$c000
+	org	$8000
 	
 screenaddr	EQU	$4000
 scrsize		EQU	6144
@@ -424,7 +424,7 @@ ytable		include	"ytab.asm"
 xtable		include	"xtab.asm"
 font		include "6x8_1.asm"
 
-esp_init	db	"AT",0x0d,0x0a
+esp_init	db	"AT+GMR",0x0d,0x0a
 esp_ip		db	'AT+CIPSTART="TCP","ru.wikipedia.ru",80',0x0d,0x0a	;40bytes
 esp_list	db	"AT+CIPSEND=39",$0d,$0a		;15 bytes
 esp_send	db	"GET /	HTTP/1.1 Host: ru.wikipedia.org",0x0d,0x0a,0xff ;39 bytes
@@ -434,7 +434,7 @@ buffer		block	2048,0x20
 		DISPLAY "data SIZE:",/A,buffer-esp_init
 		display	"buffer addr: ",/A,buffer
 		display "text placement",/A,here+1
-		display	"start	test here: ", /A, test
+		display	"start test here: ", /A, test
 codeend
 	emptytrd	"1.trd"
 ;	savetrd		"1.trd", "memlib.C", main, codeend-main
