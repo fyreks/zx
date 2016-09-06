@@ -65,7 +65,8 @@ test
 	call	UART_FIFO_RESET	
 	ld	hl,esp_myip		;AT+CIFSR
 	call	UART_WRITE
-	call	wait10
+;	call	wait10
+;	call	wait10
 
 	pop	hl
 	call	UART_READ
@@ -101,6 +102,7 @@ test
 	pop	hl
 	call	UART_READ
 	call	UART_FIFO_RESET	
+	call	UART_READ
 
 	ld	a,#ff
 	ld	(hl),a
@@ -136,7 +138,7 @@ here
 	jp	global
 	
 wait10
-	ld	b,10
+	ld	b,2
 	ei
 .zz	halt
 	djnz	.zz
