@@ -1,4 +1,3 @@
-	
 UART_DAT EQU 0xF8EF ;DAT и DLL одинаковые, так надо
 UART_DLL EQU 0xF8EF 
 UART_DLM EQU 0xF9EF 
@@ -16,7 +15,7 @@ UART_INIT:
 	ld	a,0x83
 	out	(c),a
 	ld	b,0xf8          	;DLL
-	ld	de,1			;делитель 1 - 115200; 2 - 57600
+	ld	de,2		;делитель 1 - 115200; 2 - 57600
 	out	(c),e
 	inc	b               	;DLM
 	out	(c),d
@@ -47,10 +46,10 @@ UART_FIFO_RESET
 ;лучше выключать прерывания на время приёмки. а то просрём дату, и будед переполнение фифо
 
 UART_READ:
-	dec	de
-	ld	a,d
-	or	e
-	ret	z			;читать больше нинадо, выход с ОК, в А ноль
+;	dec	de
+;	ld	a,d
+;	or	e
+;	ret	z			;читать больше нинадо, выход с ОК, в А ноль
 	ld	bc,UART_LSR		;читаем статус
 
 UART_READ_WAIT:
@@ -65,11 +64,10 @@ UART_READ_WAIT:
 ;	jr	z,UART_READ		;если буфер пустой то ждём
 	ld	bc,UART_DAT		;читаем байт
 	in	a,(c)
+	or	a
+	ret	z
 	ld	(hl),a
 	inc	hl
-	cp	10
-	ret	z
-
 	jr	UART_READ
 	
 ;отправка. на выходе в A: ноль-ОК, не нуль - ошибка
@@ -82,8 +80,8 @@ _putch1:
 	jr	z,_putch1
 	ld	b,0xf8		;DAT
 	ld	a,(hl)
-	out	(c),a
-	cp	13
+	or	a
 	ret	z
+	out	(c),a
 	inc	hl
 	jr	UART_WRITE
