@@ -41,43 +41,67 @@ main
 ; 				TEST block
 test
 	di
-	call UART_INIT
-	ld hl,esp_init
-	call UART_WRITE
+	call	UART_INIT
+	call	wait10
+	ld	hl,esp_init		;ATE0
+	call	UART_WRITE
+	call	wait10
 	
 	ld	hl,buffer
-	ld	de,512
-	call UART_READ
-	push	hl
-
+	call	UART_READ
 	call	wait10
-	
-	ld	hl,esp_ip
+
+	push	hl
+	call	UART_FIFO_RESET	
+	ld	hl,esp_ip			;AT+GMR
 	call	UART_WRITE
+	call	wait10
 
 	pop	hl
-	ld	DE,255
 	call	UART_READ
-	push	hl
 	call	wait10
-	
+
+	push	hl
+	call	UART_FIFO_RESET	
+	ld	hl,esp_myip		;AT+CIFSR
+	call	UART_WRITE
+	call	wait10
+
+	pop	hl
+	call	UART_READ
+	call	wait10
+
+
+	push	hl
+	call	UART_FIFO_RESET	;AT+CIPSTART...
+	ld	hl,esp_con		
+	call	UART_WRITE
+	call	wait10
+
+	pop	hl
+	call	UART_READ
+	call	wait10
+
+	push	hl
+	call	UART_FIFO_RESET	
 	ld	hl,esp_list
 	call	UART_WRITE
-	
+	call	wait10
+
 	pop	hl
-	ld	de,255
 	call	UART_READ
 	push	hl
 	call	wait10
-	
+
+	call	UART_FIFO_RESET	
 	ld	hl,esp_send
 	call	UART_WRITE
+	call	wait10
 
 	pop	hl
-	ld	de,2048
 	call	UART_READ
-	call	wait10
-	
+	call	UART_FIFO_RESET	
+
 	ld	a,#ff
 	ld	(hl),a
 	ei
@@ -112,7 +136,7 @@ here
 	jp	global
 	
 wait10
-	ld	b,20
+	ld	b,1
 	ei
 .zz	halt
 	djnz	.zz
@@ -220,7 +244,7 @@ puts
 ;		ld	b,(hl)
 ;		push	bc
 ;		pop	hl
-;		ld	a,puts				;here type string proc selected
+;		ld	a,puts			;here type string proc selected
 ;		jp	(hl)				;execute it in exact screen driver
 ;.usezx
 
@@ -344,47 +368,34 @@ get_coords_char
 ; Returns address in HL 
 
 ;Get_Pixel_Address: 
-      LD A,(de)				; Calculate Y2,Y1,Y0 
-      AND %00000111	 		; Mask out unwanted bits 
-      OR %01000000 			; Set base address of screen 
-      LD H,A 				; Store in H 
-      LD A,(de)			      ; Calculate Y7,Y6 
-      RRA 					; Shift to position 
-      RRA 
-      RRA 
-      AND %00011000 			; Mask out unwanted bits 
-      OR H 					; OR with Y2,Y1,Y0 
-      LD H,A 				; Store in H 
-      LD A,(de) 				; Calculate Y5,Y4,Y3 
-      RLA 					; Shift to position 
-      RLA 
-      AND %11100000 			; Mask out unwanted bits 
-      LD L,A 				; Store in L
-	inc	de
-      LD A,(de) 				; Calculate X4,X3,X2,X1,X0 
-      RRA 					; Shift into position 
-      RRA 
-      RRA 
-      AND %00011111 			; Mask out unwanted bits 
-      OR L 					; OR with Y5,Y4,Y3 
-      LD L,A 				; Store in L
-	ld	(scrpos),hl
-      RET
+ 		LD A,(de)			; Calculate Y2,Y1,Y0 
+      	AND %00000111	 	; Mask out unwanted bits 
+      	OR %01000000 		; Set base address of screen 
+      	LD H,A 			; Store in H 
+      	LD A,(de)			; Calculate Y7,Y6 
+		RRA 				; Shift to position 
+      	RRA 
+      	RRA 
+      	AND %00011000 		; Mask out unwanted bits 
+      	OR H 				; OR with Y2,Y1,Y0 
+      	LD H,A 			; Store in H 
+		LD A,(de) 			; Calculate Y5,Y4,Y3 
+      	RLA 				; Shift to position 
+      	RLA 
+      	AND %11100000 		; Mask out unwanted bits 
+      	LD L,A 			; Store in L
+		inc	de
+      	LD A,(de) 			; Calculate X4,X3,X2,X1,X0 
+      	RRA 				; Shift into position 
+      	RRA 
+      	RRA 
+      	AND %00011111 		; Mask out unwanted bits 
+      	OR L 				; OR with Y5,Y4,Y3 
+      	LD L,A 			; Store in L
+		ld	(scrpos),hl
+      	RET
 
 		
-		; Here comes UART functions
-;		di
-;		call UART_INIT
-;		ld hl,0x4000
-;		ld de,16
-;		call UART_READ
-;		ld hl,0x4000
-;		ld de,16
-;		call UART_WRITE
-;		ei
-;		halt
-;		ret
-
 ;parse
 ;		ld	hl,buffer
 ;		ld	de,buffer2
@@ -416,7 +427,7 @@ get_coords_char
 		include	"uart_RW.asm"
 
 		
-text		db	$1B,0,0,"Franky's ESP Wi-Fi, $ver:0.01",$1b,22*8,0,"enter AT commands. Some times works хорошо",$1b,8,0,">", $ff
+text		db	$1B,0,0,"Franky's ESP Wi-Fi, $ver:0.01",$1b,22*8,0,"enter AT commands. Some times works WELL",$1b,8,0,">", $ff
 scrpos		db	0,$40
 subtbl		dw	puts,putc,plot,0,0,0,cls,0,get_coords_char
 c_coords	db	0,0
@@ -424,18 +435,20 @@ ytable		include	"ytab.asm"
 xtable		include	"xtab.asm"
 font		include "6x8_1.asm"
 
-esp_init	db	"AT+GMR",0x0d,0x0a
-esp_ip		db	'AT+CIPSTART="TCP","ru.wikipedia.ru",80',0x0d,0x0a	;40bytes
-esp_list	db	"AT+CIPSEND=39",$0d,$0a		;15 bytes
-esp_send	db	"GET /	HTTP/1.1 Host: ru.wikipedia.org",0x0d,0x0a,0xff ;39 bytes
+esp_init	db	"ATE0",0x0d,0x0a,0
+esp_ip		db	'AT+GMR',0x0d,0x0a,0
+esp_myip	db	"AT+CIFSR",0X0D,0X0A,0
+esp_con		db	'AT+CIPSTART="TCP","ru.wikipedia.ru",80',0x0d,0x0a,0	;40bytes
+esp_list	db	"AT+CIPSEND=39",$0d,$0a,0		;15 bytes
+esp_send	db	"GET /	HTTP/1.1 Host: ru.wikipedia.org",0x0d,0x0a,0 ;39 bytes
 buffer		block	2048,0x20
-;buffer2		block	2048,0x20
+;buffer2	block	2048,0x20
 
-		DISPLAY "data SIZE:",/A,buffer-esp_init
+		display	"data SIZE:",/A,buffer-esp_init
 		display	"buffer addr: ",/A,buffer
-		display "text placement",/A,here+1
+		display	"text placement",/A,here+1
 		display	"start test here: ", /A, test
 codeend
-	emptytrd	"1.trd"
+	emptytrd		"1.trd"
 ;	savetrd		"1.trd", "memlib.C", main, codeend-main
 	savetrd		"1.trd", "typist.C", main, codeend-main
