@@ -136,7 +136,7 @@ here
 	jp	global
 	
 wait10
-	ld	b,1
+	ld	b,10
 	ei
 .zz	halt
 	djnz	.zz
@@ -201,11 +201,11 @@ global
 		jr	z,.skp1
 		ld	b,0
 		ld	c,a
-.lp1	inc	hl
+.lp1		inc	hl
 		inc	hl
 		dec	a
 		jr	nz,.lp1
-.skp1	ld	c,(hl)
+.skp1		ld	c,(hl)
 		inc	hl
 		ld	b,(hl)
 		push	bc
@@ -308,14 +308,14 @@ put_c
 		ld	de,(scrpos)
 		
 		ld	b,8
-.loop	ld	a,(hl)
+.loop		ld	a,(hl)
 		ld	(de),a
 		inc	hl
 		inc	d
 		djnz	.loop
 		ret
 
-plot	ld	l,d
+plot		ld	l,d
 		ld	h,0
 		add	hl,hl
 		ld	bc,ytable
@@ -368,23 +368,23 @@ get_coords_char
 ; Returns address in HL 
 
 ;Get_Pixel_Address: 
- 		LD A,(de)			; Calculate Y2,Y1,Y0 
+	LD A,(de)			; Calculate Y2,Y1,Y0 
       	AND %00000111	 	; Mask out unwanted bits 
       	OR %01000000 		; Set base address of screen 
       	LD H,A 			; Store in H 
       	LD A,(de)			; Calculate Y7,Y6 
-		RRA 				; Shift to position 
+	RRA 				; Shift to position 
       	RRA 
       	RRA 
       	AND %00011000 		; Mask out unwanted bits 
       	OR H 				; OR with Y2,Y1,Y0 
       	LD H,A 			; Store in H 
-		LD A,(de) 			; Calculate Y5,Y4,Y3 
+	LD A,(de) 			; Calculate Y5,Y4,Y3 
       	RLA 				; Shift to position 
       	RLA 
       	AND %11100000 		; Mask out unwanted bits 
       	LD L,A 			; Store in L
-		inc	de
+	inc	de
       	LD A,(de) 			; Calculate X4,X3,X2,X1,X0 
       	RRA 				; Shift into position 
       	RRA 
@@ -392,7 +392,7 @@ get_coords_char
       	AND %00011111 		; Mask out unwanted bits 
       	OR L 				; OR with Y5,Y4,Y3 
       	LD L,A 			; Store in L
-		ld	(scrpos),hl
+	ld	(scrpos),hl
       	RET
 
 		
