@@ -33,42 +33,52 @@ UART_FIFO_RESET
 	out	(c),a
 	ld	a,0x01
 	out	(c),A
-.clfifo:
-	ld	b,0xfd          	;LSR
-	in	a,(c)
-	and	0x01	
-	ret	z
-	ld	b,0xf8          	;DAT
-	in	a,(c)
-	jr	.clfifo
+	ret
+;.clfifo:
+;	ld	b,0xfd          	;LSR
+;	in	a,(c)
+;	and	0x01	
+;	ret	z
+;	ld	b,0xf8          	;DAT
+;	in	a,(c)
+;	jr	.clfifo
 	
 ;приём DE-байтов в по адресу HL. на выходе в A: ноль-ОК, неноль-ошибка
 ;лучше выключать прерывания на время приёмки. а то просрём дату, и будед переполнение фифо
 
 UART_READ:
-;	dec	de
-;	ld	a,d
-;	or	e
-;	ret	z			;читать больше нинадо, выход с ОК, в А ноль
+	ld	de,1536
+.lp1
+	dec	de
+	ld	a,e
+	or	d
+	ret	z
 	ld	bc,UART_LSR		;читаем статус
 
-UART_READ_WAIT:
+;UART_READ_WAIT:
 
-	in	a,(c)		
-	and	1
-	ret	z
+;	in	a,(c)		
+;	and	1
+;	ret	z
+;	jr	z,UART_READ_WAIT
 ;	bit	1,a			;проверяем на переполнение буфера
 					;выход с ошибкой, в А неноль
 ;	ret	nz
 ;	bit	0,a			;проверяем естьли чего в буфере приёма
-;	jr	z,UART_READ		;если буфер пустой то ждём
+;	jr	z,UART_READ_WAIT	;если буфер пустой то ждём
 	ld	bc,UART_DAT		;читаем байт
-	in	a,(c)
+.lp2	in	a,(c)
 	or	a
-	ret	z
+	jr	z,.lp2
 	ld	(hl),a
 	inc	hl
-	jr	UART_READ
+	cp	#0a
+	jr	nz,.lp1
+	ld	b,#FD
+	in	a,(c)
+	bit	0,a
+	ret	z
+	jr	.lp1
 	
 ;отправка. на выходе в A: ноль-ОК, не нуль - ошибка
 
