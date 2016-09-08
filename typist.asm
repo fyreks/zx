@@ -45,21 +45,24 @@ test
 	call	wait10
 	ld	hl,esp_init		;ATE0
 	call	UART_WRITE
-	call	wait10
+;	call	wait10
 	
 	ld	hl,buffer
 	call	UART_READ
-	call	wait10
+	call	UART_READ
+;	call	wait10
 
 	push	hl
 	call	UART_FIFO_RESET	
 	ld	hl,esp_ip			;AT+GMR
 	call	UART_WRITE
-	call	wait10
+;	call	wait10
 
 	pop	hl
 	call	UART_READ
-	call	wait10
+	call	UART_READ
+;	call	wait10
+;	call	wait10
 
 	push	hl
 	call	UART_FIFO_RESET	
@@ -69,39 +72,59 @@ test
 ;	call	wait10
 
 	pop	hl
+
 	call	UART_READ
-	call	wait10
+;	call	wait10
+	call	UART_READ
+;	call	wait10
 
 
 	push	hl
 	call	UART_FIFO_RESET	;AT+CIPSTART...
 	ld	hl,esp_con		
 	call	UART_WRITE
-	call	wait10
+;	call	wait10
 
 	pop	hl
 	call	UART_READ
-	call	wait10
+;	call	wait10
+	call	UART_READ
+;	call	wait10
+	call	UART_READ
+;	call	wait10
 
 	push	hl
 	call	UART_FIFO_RESET	
 	ld	hl,esp_list
 	call	UART_WRITE
-	call	wait10
+;	call	wait10
 
 	pop	hl
 	call	UART_READ
+;	call	wait10
+	call	UART_READ
+;	call	wait10
+	call	UART_READ
+;	call	wait10
+
 	push	hl
-	call	wait10
+;	call	wait10
 
 	call	UART_FIFO_RESET	
 	ld	hl,esp_send
 	call	UART_WRITE
-	call	wait10
+;	call	wait10
 
 	pop	hl
 	call	UART_READ
+	call	UART_READ
+;	call	wait10
+	call	UART_READ
+;	call	wait10
+
 	call	UART_FIFO_RESET	
+	call	UART_READ
+	call	UART_READ
 	call	UART_READ
 
 	ld	a,#ff
@@ -109,7 +132,7 @@ test
 	ei
 
 	call	init
-	ld	a,6		; CLS screen
+	ld	a,6			; CLS screen
 	call	global
 
 ;	ld	de,#405f
@@ -138,10 +161,10 @@ here
 	jp	global
 	
 wait10
-	ld	b,2
+;	ld	b,2
 	ei
 .zz	halt
-	djnz	.zz
+;	djnz	.zz
 	di
 	ret
 	
@@ -438,8 +461,8 @@ xtable		include	"xtab.asm"
 font		include "6x8_1.asm"
 
 esp_init	db	"ATE0",0x0d,0x0a,0
-esp_ip		db	'AT+GMR',0x0d,0x0a,0
-esp_myip	db	"AT+CIFSR",0X0D,0X0A,0
+esp_ip		db	'AT+CIFSR',0x0d,0x0a,0
+esp_myip	db	"AT",0X0D,0X0A,0
 esp_con		db	'AT+CIPSTART="TCP","ru.wikipedia.ru",80',0x0d,0x0a,0	;40bytes
 esp_list	db	"AT+CIPSEND=39",$0d,$0a,0		;15 bytes
 esp_send	db	"GET /	HTTP/1.1 Host: ru.wikipedia.org",0x0d,0x0a,0 ;39 bytes
@@ -451,6 +474,6 @@ buffer		block	2048,0x20
 		display	"text placement",/A,here+1
 		display	"start test here: ", /A, test
 codeend
-	emptytrd		"1.trd"
+	emptytrd	"1.trd"
 ;	savetrd		"1.trd", "memlib.C", main, codeend-main
 	savetrd		"1.trd", "typist.C", main, codeend-main
