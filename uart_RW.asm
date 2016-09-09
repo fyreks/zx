@@ -47,43 +47,44 @@ UART_FIFO_RESET
 ;лучше выключать прерывания на время приёмки. а то просрём дату, и будед переполнение фифо
 
 UART_READ:
-	ld	de,1536
+	ld	de,$400
+	call	UART_BUF_READ
+	ld	bc,UART_DAT
+
 .lp1
 	dec	de
 	ld	a,e
 	or	d
 	ret	z
-	ld	bc,UART_LSR		;читаем статус
+	in	a,(c)			;Читаем байтик
+	ld	(hl),a
+	inc	hl
+	cp	#0d
+	jr	nz,.lp1
+	call	UART_BUF_CHECK	
+	in	a,(c)
+	ld	(hl),a
+	inc	hl	
+	cp	#0a
+	ret	z
+	jr	.lp1
 
-;UART_READ_WAIT:
-
-;	in	a,(c)		
-;	and	1
-;	ret	z
-;	jr	z,UART_READ_WAIT
+UART_BUF_CHECK
+	push	bc
+	ld	b,#fd			;LSR check for emptyness
+.lp2	in	a,(c)
 ;	bit	1,a			;проверяем на переполнение буфера
 					;выход с ошибкой, в А неноль
 ;	ret	nz
-;	bit	0,a			;проверяем естьли чего в буфере приёма
-;	jr	z,UART_READ_WAIT	;если буфер пустой то ждём
-	ld	bc,UART_DAT		;читаем байт
-.lp2	in	a,(c)
-	or	a
-	jr	z,.lp2
-	ld	(hl),a
-	inc	hl
-	cp	#0a
-	jr	nz,.lp1
-	ld	b,#FD
-	in	a,(c)
-	bit	0,a
-	ret	z
-	jr	.lp1
+	bit	0,a			;проверяем есть ли чего в буфере приёма
+	jr	z,UART_READ_WAIT	;если буфер пустой то ждём
+	pop	bc
+	ret
 	
-;отправка. на выходе в A: ноль-ОК, не нуль - ошибка
+
 
 UART_WRITE:
-      ld	bc,0xfdef       ;LSR
+      ld	bc,0xfdef       	;LSR
 _putch1:
 	in	a,(c)	
 	and	0x20
