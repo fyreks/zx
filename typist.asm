@@ -42,87 +42,69 @@ main
 test
 	di
 	call	UART_INIT
-	call	wait10
 	ld	hl,esp_init		;ATE0
 	call	UART_WRITE
-;	call	wait10
 	
 	ld	hl,buffer
 	call	UART_READ
-	call	UART_READ
-;	call	wait10
 
 	push	hl
 	call	UART_FIFO_RESET	
 	ld	hl,esp_ip			;AT+GMR
 	call	UART_WRITE
-;	call	wait10
 
 	pop	hl
 	call	UART_READ
 	call	UART_READ
-;	call	wait10
-;	call	wait10
 
 	push	hl
 	call	UART_FIFO_RESET	
 	ld	hl,esp_myip		;AT+CIFSR
 	call	UART_WRITE
-;	call	wait10
-;	call	wait10
 
 	pop	hl
 
 	call	UART_READ
-;	call	wait10
 	call	UART_READ
-;	call	wait10
 
 
 	push	hl
 	call	UART_FIFO_RESET	;AT+CIPSTART...
 	ld	hl,esp_con		
 	call	UART_WRITE
-;	call	wait10
 
 	pop	hl
 	call	UART_READ
-;	call	wait10
 	call	UART_READ
-;	call	wait10
 	call	UART_READ
-;	call	wait10
 
 	push	hl
 	call	UART_FIFO_RESET	
 	ld	hl,esp_list
 	call	UART_WRITE
-;	call	wait10
 
 	pop	hl
 	call	UART_READ
-;	call	wait10
 	call	UART_READ
-;	call	wait10
 	call	UART_READ
-;	call	wait10
 
 	push	hl
-;	call	wait10
 
 	call	UART_FIFO_RESET	
 	ld	hl,esp_send
 	call	UART_WRITE
-;	call	wait10
 
 	pop	hl
 	call	UART_READ
 	call	UART_READ
-;	call	wait10
 	call	UART_READ
-;	call	wait10
 
 	call	UART_FIFO_RESET	
+	call	UART_READ
+	call	UART_READ
+	call	UART_READ
+	call	UART_READ
+	call	UART_READ
 	call	UART_READ
 	call	UART_READ
 	call	UART_READ
@@ -449,7 +431,111 @@ get_coords_char
 ;		ld	(de),a 
 ;		jr	.stparse
 
-		include	"uart_RW.asm"
+
+
+;		include	"uart_RW.asm"
+;----------------------------------CUT HERE------------------------------------------
+
+UART_DAT EQU 0xF8EF ;DAT и DLL одинаковые, так надо
+UART_DLL EQU 0xF8EF 
+UART_DLM EQU 0xF9EF 
+UART_FCR EQU 0xFAEF 
+UART_LCR EQU 0xFBEF 
+UART_LSR EQU 0xFDEF 
+RTC_REG EQU 0xDEF7 
+RTC_DATA EQU 0xBEF7 
+
+
+;инициализация
+UART_INIT: 
+
+	ld	bc,0xfbef       	;LCR
+	ld	a,0x83
+	out	(c),a
+	ld	b,0xf8          	;DLL
+	ld	de,2		;делитель 1 - 115200; 2 - 57600
+	out	(c),e
+	inc	b               	;DLM
+	out	(c),d
+	ld	b,0xfc          	;MCR
+	ld	a,0x03
+	out	(c),a
+	dec	b               	;LCR
+	ld	a,0x03
+	out	(c),a
+
+UART_FIFO_RESET
+
+	ld	bc,0xfaef       	;FCR
+	ld	a,0x07          	;FIFO reset
+	out	(c),a
+	ld	a,0x01
+	out	(c),A
+	ret
+
+	
+;На входе в HL буфер, куда читать пакет.
+;лучше выключать прерывания на время приёмки. а то потеряем дату, и будет переполнение фифо
+
+UART_READ:
+	ld	de,$400			; количество попыток чтения из FIFO, на всяк случай, т.к. мы не знаем маркер конца
+	call	UART_BUF_CHECK
+	ld	bc,UART_DAT
+
+.lp1
+	dec	de
+	ld	a,e
+	or	d
+	ret	z
+	in	a,(c)			;Читаем байтик
+	or	a
+	jr	z,.lp1
+	ld	(hl),a
+	inc	hl
+	cp	#0d
+	jr	nz,.lp1
+	call	UART_BUF_CHECK	
+	in	a,(c)
+	ld	(hl),a
+	inc	hl	
+	cp	#0a
+	ret	z
+	jr	.lp1
+
+UART_BUF_CHECK
+	push	bc
+	push	de
+	ld	d,100
+	ld	b,#fd			;LSR check for emptyness
+.lp2	dec	d
+	jr	z,.lp3
+	in	a,(c)
+;					;ПОКА не проверяем на переполнение буфера!!!
+;	bit	1,a			;проверяем на переполнение буфера
+					;выход с ошибкой, в А неноль
+;	ret	nz
+	bit	0,a			;проверяем есть ли чего в буфере приёма
+	jr	z,.lp2			;если буфер пустой то ждём
+.lp3	pop	de
+	pop	bc
+	ret
+	
+
+
+UART_WRITE:
+      ld	bc,0xfdef       	;LSR
+_putch1:
+	in	a,(c)	
+	and	0x20
+	jr	z,_putch1
+	ld	b,0xf8		;DAT
+	ld	a,(hl)
+	or	a
+	ret	z
+	out	(c),a
+	inc	hl
+	jr	UART_WRITE
+
 
 		
 text		db	$1B,0,0,"Franky's ESP Wi-Fi, $ver:0.01",$1b,22*8,0,"enter AT commands. Some times works WELL",$1b,8,0,">", $ff
@@ -462,11 +548,11 @@ font		include "6x8_1.asm"
 
 esp_init	db	"ATE0",0x0d,0x0a,0
 esp_ip		db	'AT+CIFSR',0x0d,0x0a,0
-esp_myip	db	"AT",0X0D,0X0A,0
-esp_con		db	'AT+CIPSTART="TCP","ru.wikipedia.ru",80',0x0d,0x0a,0	;40bytes
-esp_list	db	"AT+CIPSEND=39",$0d,$0a,0		;15 bytes
-esp_send	db	"GET /	HTTP/1.1 Host: ru.wikipedia.org",0x0d,0x0a,0 ;39 bytes
-buffer		block	2048,0x20
+esp_myip	db	"AT+CIPSSLSIZE=4096",0X0D,0X0A,0
+esp_con		db	'AT+CIPSTART="SSL","web.telegram.org/#/login",443',0x0d,0x0a,0
+esp_list	db	"AT+CIPSEND=39",$0d,$0a,0
+esp_send	db	"GET /	HTTP/1.1 Host: web.telegram.org",0x0d,0x0a,0 ;39 bytes
+buffer		block	4096,0x20
 ;buffer2	block	2048,0x20
 
 		display	"data SIZE:",/A,buffer-esp_init
@@ -474,6 +560,6 @@ buffer		block	2048,0x20
 		display	"text placement",/A,here+1
 		display	"start test here: ", /A, test
 codeend
-	emptytrd	"1.trd"
+	emptytrd		"1.trd"
 ;	savetrd		"1.trd", "memlib.C", main, codeend-main
 	savetrd		"1.trd", "typist.C", main, codeend-main
