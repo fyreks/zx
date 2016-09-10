@@ -41,7 +41,7 @@ UART_FIFO_RESET
 
 UART_READ:
 	ld	de,$400			; количество попыток чтения из FIFO, на всяк случай, т.к. мы не знаем маркер конца
-	call	UART_BUF_READ
+	call	UART_BUF_CHECK
 	ld	bc,UART_DAT
 
 .lp1
@@ -71,7 +71,7 @@ UART_BUF_CHECK
 					;выход с ошибкой, в А неноль
 ;	ret	nz
 	bit	0,a			;проверяем есть ли чего в буфере приёма
-	jr	z,UART_READ_WAIT	;если буфер пустой то ждём
+	jr	z,.lp2			;если буфер пустой то ждём
 	pop	bc
 	ret
 	
