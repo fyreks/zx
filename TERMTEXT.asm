@@ -1113,7 +1113,7 @@ _putch1:
 	jr	UART_WRITE
 
 
-;		DISP	#7B00
+ 	ORG	#7B00
 FONT
 		INCBIN "42F.!C"
 ;		ENT
