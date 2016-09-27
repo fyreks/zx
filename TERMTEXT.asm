@@ -23,6 +23,7 @@ NEXT
 	inc	hl
 	or	a
 	jr	nz,.lp1
+	dec	hl
 	ld	a,#0d
 	ld	(hl),a
 	inc	hl
