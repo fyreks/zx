@@ -23,7 +23,7 @@ NEXT
 	JR	Z,BREAK
 	ld	hl,BUF
 	push	hl
-	ld	a,(hl)
+.lp1	ld	a,(hl)
 	inc	hl
 	or	a
 	jr	nz,.lp1
