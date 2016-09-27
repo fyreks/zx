@@ -1103,10 +1103,10 @@ _putch1:
 	in	a,(c)	
 	and	0x20
 	jr	z,_putch1
-	ld	b,0xf8		;DAT
 	ld	a,(hl)
 	or	a
 	ret	z
+	ld	b,0xf8			;DAT
 	out	(c),a
 	inc	hl
 	jr	UART_WRITE
