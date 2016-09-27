@@ -1,0 +1,2 @@
+..\sjasmplus TERMTEXT.asm
+pause
