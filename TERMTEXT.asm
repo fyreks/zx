@@ -4,6 +4,7 @@ NOBYTE	EQU 	23726
 HGT		EQU 	38
 SECBUF	EQU	#7000
 BUF		EQU	#7700
+BIGBUF		EQU	#8000
 FONTS		EQU 	#7800
 
 		ORG	#7B00
@@ -15,13 +16,32 @@ FONT
 
 main
 	CALL	TERMINAL_INIT
+	call	UART_INIT
 NEXT
 	CALL	TERMINAL_INPUT
 	OR	A
 	JR	Z,BREAK
-
+	ld	hl,BUF
+	push	hl
+	ld	a,(hl)
+	inc	hl
+	or	a
+	jr	nz,.lp1
+	ld	#0d,a
+	ld	(hl),a
+	inc	hl
+	ld	a,10
+	ld	(hl),a
+	inc	hl
+	xor	a
+	ld	(hl),a
+	pop	hl
+	call	UART_WRITE
 	; HL - TEXT
-
+	ld	hl,BIGBUF
+	push	hl
+	call	UART_READ
+	pop	hl
 	CALL	TERMINAL_PRINT
 
 	JR	NEXT
@@ -29,9 +49,7 @@ NEXT
 BREAK
 	RET 
 
-;	INCLUDE	"TERMTEXT.asm",#17
-;	INCLUDE	"TERMTEXT.asm"
-
+	include	"uart_RW.asm"
 TERMINAL_INIT
 
 		CALL	DEPKFNT
@@ -998,10 +1016,4 @@ codeend
 	emptytrd		"1term.trd"
 ;	savetrd		"1term.trd", "memlib.C", main, codeend-main
 	savetrd		"1term.trd", "term.C", main, codeend-main
-
-
-
-
-
-
-
+	
