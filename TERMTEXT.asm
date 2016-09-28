@@ -4,7 +4,7 @@ NOBYTE	EQU 	23726
 HGT		EQU 	38
 SECBUF	EQU	#7000
 BUF		EQU	#7700
-BIGBUF	EQU	#8000
+BIGBUF	EQU	#9000
 FONTS		EQU 	#7800
 
 		ORG	#7000
@@ -350,59 +350,59 @@ CLRSCR
 
 CTRLS		DEFW PGUP,PGDN,DOWN,UP
 
-SETIM		DI 
-		LD A,#77
-		LD H,A
-		LD L,255
-		LD DE,IMER
-		LD (hl),E
-		INC HL
-		LD (hl),D
-		LD I,A
-		EI 
-		RET 
-
-IMER		PUSH AF
-		PUSH BC
-		PUSH DE
-		PUSH HL
-		LD A,31
-		LD BC,32765
-		OUT (C),A
-		PUSH BC
-		LD HL,#D800
-		LD DE,#D801
-		LD BC,255
-		LD (hl),7
-		LDIR 
-		LD HL,486;348
-IMER0		DEC HL
-		LD A,H
-		OR L
-		JR NZ,IMER0
-		POP BC
-		LD A,23
-		OUT (C),A
-		PUSH BC
-		LD HL,#D800
-		LD DE,#D801
-		LD BC,255
-		LD (hl),L
-		LDIR 
-		LD HL,1435
-IMER1		DEC HL
-		LD A,H
-		OR L
-		JR NZ,IMER1
-		POP BC
-		LD A,31
-		OUT (C),A
-		POP HL
-		POP DE
-		POP BC
-		POP AF
-		RST 56
-		RET 
+;SETIM		DI 
+;		LD A,#77
+;		LD H,A
+;		LD L,255
+;		LD DE,IMER
+;		LD (hl),E
+;		INC HL
+;		LD (hl),D
+;		LD I,A
+;		EI 
+;		RET 
+;
+;IMER		PUSH AF
+;		PUSH BC
+;		PUSH DE
+;		PUSH HL
+;		LD A,31
+;		LD BC,32765
+;		OUT (C),A
+;		PUSH BC
+;		LD HL,#D800
+;		LD DE,#D801
+;		LD BC,255
+;		LD (hl),7
+;		LDIR 
+;		LD HL,486;348
+;IMER0		DEC HL
+;		LD A,H
+;		OR L
+;		JR NZ,IMER0
+;		POP BC
+;		LD A,23
+;		OUT (C),A
+;		PUSH BC
+;		LD HL,#D800
+;		LD DE,#D801
+;		LD BC,255
+;		LD (hl),L
+;		LDIR 
+;		LD HL,1435
+;IMER1		DEC HL
+;		LD A,H
+;		OR L
+;		JR NZ,IMER1
+;		POP BC
+;		LD A,31
+;		OUT (C),A
+;		POP HL
+;		POP DE
+;		POP BC
+;		POP AF
+;		RST 56
+;		RET 
 
 PRCATDO	POP AF
 
@@ -466,7 +466,7 @@ PRCATNO	LD (hl),0
 		BIT 3,E
 		JR Z,PRCAT0
 		JR $+3
-PRCATQ	POP DE
+PRCATQ		POP DE
 		LD (23728),BC
 		LD A,23
 		CALL SETSCRN+2
@@ -1010,115 +1010,17 @@ GETBYTA	ADD A,24
 		POP BC
 		RET
 
-;		include	"uart_RW.asm"
-;----------------------------------CUT HERE------------------------------------------
-
-UART_DAT EQU 0xF8EF ;DAT и DLL одинаковые, так надо
-UART_DLL EQU 0xF8EF 
-UART_DLM EQU 0xF9EF 
-UART_FCR EQU 0xFAEF 
-UART_LCR EQU 0xFBEF 
-UART_LSR EQU 0xFDEF 
-RTC_REG EQU 0xDEF7 
-RTC_DATA EQU 0xBEF7 
 
 
-;инициализация
-UART_INIT: 
-
-	ld	bc,0xfbef       	;LCR
-	ld	a,0x83
-	out	(c),a
-	ld	b,0xf8          	;DLL
-	ld	de,2		;делитель 1 - 115200; 2 - 57600
-	out	(c),e
-	inc	b               	;DLM
-	out	(c),d
-	ld	b,0xfc          	;MCR
-	ld	a,0x03
-	out	(c),a
-	dec	b               	;LCR
-	ld	a,0x03
-	out	(c),a
-
-UART_FIFO_RESET
-
-	ld	bc,0xfaef       	;FCR
-	ld	a,0x07          	;FIFO reset
-	out	(c),a
-	ld	a,0x01
-	out	(c),A
-	ret
-
-	
-;На входе в HL буфер, куда читать пакет.
-;лучше выключать прерывания на время приёмки. а то потеряем дату, и будет переполнение фифо
-
-UART_READ:
-	ld	de,$400			; количество попыток чтения из FIFO, на всяк случай, т.к. мы не знаем маркер конца
-	call	UART_BUF_CHECK
-	ld	bc,UART_DAT
-
-.lp1
-	dec	de
-	ld	a,e
-	or	d
-	ret	z
-	in	a,(c)			;Читаем байтик
-	or	a
-	jr	z,.lp1
-	ld	(hl),a
-	inc	hl
-	cp	#0d
-	jr	nz,.lp1
-	call	UART_BUF_CHECK	
-	in	a,(c)
-	ld	(hl),a
-	inc	hl	
-	cp	#0a
-	ret	z
-	jr	.lp1
-
-UART_BUF_CHECK
-	push	bc
-	push	de
-	ld	d,100
-	ld	b,#fd			;LSR check for emptyness
-.lp2	dec	d
-	jr	z,.lp3
-	in	a,(c)
-;					;ПОКА не проверяем на переполнение буфера!!!
-;	bit	1,a			;проверяем на переполнение буфера
-					;выход с ошибкой, в А неноль
-;	ret	nz
-	bit	0,a			;проверяем есть ли чего в буфере приёма
-	jr	z,.lp2			;если буфер пустой то ждём
-.lp3	pop	de
-	pop	bc
-	ret
-	
-
-
-UART_WRITE:
-      ld	bc,0xfdef       	;LSR
-_putch1:
-	in	a,(c)	
-	and	0x20
-	jr	z,_putch1
-	ld	a,(hl)
-	or	a
-	ret	z
-	ld	b,0xf8			;DAT
-	out	(c),a
-	inc	hl
-	jr	UART_WRITE
-	
 err_esp		db	"No ESP!",0
 
- 	ORG	#7B00
+	 	ORG	#7B00
 FONT
 		INCBIN "42F.!C"
 ;		ENT
+
+		ORG	#8000
+		include	"uart_RW.asm"
 
 END
 
