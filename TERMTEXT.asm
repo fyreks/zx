@@ -40,7 +40,7 @@ NEXT
 	pop	hl
 	ld	a,(hl)
 	inc	a
-	jr	nz,lp2
+	jr	nz,.lp2
 	ld	hl,err_esp	
 .lp2	CALL	TERMINAL_PRINT
 
