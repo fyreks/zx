@@ -1113,7 +1113,7 @@ _putch1:
 	inc	hl
 	jr	UART_WRITE
 
-err_esp		db	"No ESP8266 found",0
+err_esp		db	"No ESP8266 found! ",0
 
  	ORG	#7B00
 FONT
