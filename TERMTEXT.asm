@@ -1112,7 +1112,8 @@ _putch1:
 	out	(c),a
 	inc	hl
 	jr	UART_WRITE
-
+	org	#a000
+	
 err_esp		db	"No ESP8266 found! ",0
 
  	ORG	#7B00
