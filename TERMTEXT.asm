@@ -24,14 +24,11 @@ NEXT
 	or	a
 	jr	nz,.lp1
 	dec	hl
-	ld	a,#0d
-	ld	(hl),a
+	ld	(hl),13
 	inc	hl
-	ld	a,10
-	ld	(hl),a
+	ld	(hl),10
 	inc	hl
-	xor	a
-	ld	(hl),a
+	ld	(hl),0
 	pop	hl
 	call	UART_WRITE
 	; HL - TEXT
@@ -41,7 +38,11 @@ NEXT
 	CALL	UART_READ
 	CALL	UART_READ
 	pop	hl
-	CALL	TERMINAL_PRINT
+	ld	a,(hl)
+	inc	a
+	jr	nz,lp2
+	ld	hl,err_esp	
+.lp2	CALL	TERMINAL_PRINT
 
 	JR	NEXT
 
@@ -1112,6 +1113,7 @@ _putch1:
 	inc	hl
 	jr	UART_WRITE
 
+err_esp		db	"No ESP8266 found",0
 
  	ORG	#7B00
 FONT
