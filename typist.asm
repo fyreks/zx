@@ -108,6 +108,14 @@ test
 	call	UART_READ
 	call	UART_READ
 	call	UART_READ
+	call	UART_READ
+	call	UART_READ
+	call	UART_READ
+	ei
+	halt
+	halt
+	di
+	call	UART_READ
 
 	ld	a,#ff
 	ld	(hl),a
@@ -251,34 +259,45 @@ puts
 ;		ld	b,(hl)
 ;		push	bc
 ;		pop	hl
-;		ld	a,puts			;here type string proc selected
+;		ld	a,puts				;here type string proc selected
 ;		jp	(hl)				;execute it in exact screen driver
 ;.usezx
 
 .looptxt
 		ld	a,(de)
-		cp	$ff
+		cp	#ff
 		ret	z
 		cp	$1b					; if ESC seq. than setup coords
 		jr	nz,.skp2
 								; X, Y coords given in pixels.
 		inc	de
-		
-		call get_coords_char
-		
+		ld	a,(de)
+		ld	c,a
 		inc	de
+		ld	a,(de)
+		ld	b,a
+		call	get_coords_char
+		inc	de		
 		ld	a,(de)				; get next byte to printout
+
 
 .skp2
 		cp	$20
 		jr	nz,.skp3
-		ld	hl,(scrpos)
-		inc	hl
-		ld	(scrpos),hl
+		call	inc_coords
 		inc	de
 		jr	.looptxt
-.skp3
-		inc	de
+.skp3		ld	a,(de)
+		cp	#0d
+		jr	nz.skp0d
+		ld	hl,(curpos)
+		call	inc_y_attr
+		ld	a,(de)
+.skp0d		inc	de
+		ld	hl,(curpx)
+		ld	b,h
+		ld	c,l
+		call	get_coords_char
 		ld	h,0
 		ld	l,a
 		add	hl,hl
@@ -289,13 +308,11 @@ puts
 		add	hl,bc
 		push	de
 		call	put_c
-		ld	de,(scrpos)
-		inc	e
-		ld	(scrpos),de
+		call	inc_coords
 		pop	de
 		jr	.looptxt
 
-putc	ex	af,af'
+putc		ex	af,af'
 		cp	$20			; put character - single on a screen. A' - ASCII character
 		jr	nz,.skp4
 		ret
@@ -367,6 +384,36 @@ plot		ld	l,d
 		
 		ret
 
+inc_coords
+		
+		ld	hl,(curpos)
+		inc	l
+		ld	a,l
+		cp	#20
+		jr	nz,.lp1
+inc_y_attr	ld	l,0
+		inc	h
+		ld	a,h
+		cp	24
+		jr	nz,.lp1
+		ld	h,0
+.lp1		ld	(curpos),hl
+
+
+		ld		a,l
+		add		a,a
+		add		a,a
+		add		a,a
+		ld		l,a
+		ld		a,h
+		add		a,a
+		add		a,a
+		add		a,a
+		LD		H,A
+		ld		(curpx),hl
+		ret
+
+
 get_coords_char
 
 ; Get screen address 
@@ -375,31 +422,31 @@ get_coords_char
 ; Returns address in HL 
 
 ;Get_Pixel_Address: 
-	LD A,(de)			; Calculate Y2,Y1,Y0 
-      	AND %00000111	 	; Mask out unwanted bits 
-      	OR %01000000 		; Set base address of screen 
-      	LD H,A 			; Store in H 
-      	LD A,(de)			; Calculate Y7,Y6 
-	RRA 				; Shift to position 
+
+	LD 		A,B			; Calculate Y2,Y1,Y0 
+      	AND 		%00000111	 	; Mask out unwanted bits 
+      	OR 		%01000000 		; Set base address of screen 
+      	LD		H,A 			; Store in H 
+      	LD 		A,B			; Calculate Y7,Y6 
+	RRA 					; Shift to position 
       	RRA 
       	RRA 
-      	AND %00011000 		; Mask out unwanted bits 
-      	OR H 				; OR with Y2,Y1,Y0 
-      	LD H,A 			; Store in H 
-	LD A,(de) 			; Calculate Y5,Y4,Y3 
-      	RLA 				; Shift to position 
+      	AND 		%00011000 		; Mask out unwanted bits 
+      	OR 		H 			; OR with Y2,Y1,Y0 
+      	LD 		H,A 			; Store in H 
+	LD 		A,B 			; Calculate Y5,Y4,Y3 
+      	RLA 					; Shift to position 
       	RLA 
-      	AND %11100000 		; Mask out unwanted bits 
-      	LD L,A 			; Store in L
-	inc	de
-      	LD A,(de) 			; Calculate X4,X3,X2,X1,X0 
-      	RRA 				; Shift into position 
+      	AND 		%11100000 		; Mask out unwanted bits 
+      	LD		L,A 			; Store in L
+      	LD 		A,C 			; Calculate X4,X3,X2,X1,X0 
+      	RRA					; Shift into position 
+      	RRA
       	RRA 
-      	RRA 
-      	AND %00011111 		; Mask out unwanted bits 
-      	OR L 				; OR with Y5,Y4,Y3 
-      	LD L,A 			; Store in L
-	ld	(scrpos),hl
+      	AND		%00011111 		; Mask out unwanted bits 
+      	OR 		L			; OR with Y5,Y4,Y3 
+      	LD 		L,A			; Store in L
+	ld		(scrpos),hl
       	RET
 
 		
@@ -538,8 +585,10 @@ _putch1:
 
 
 		
-text		db	$1B,0,0,"Franky's ESP Wi-Fi, $ver:0.01",$1b,22*8,0,"enter AT commands. Some times works WELL",$1b,8,0,">", $ff
-scrpos		db	0,$40
+text		db	$1B,0,0,"Franky's ESP Wi-Fi, $ver:0.01",$1b,22*8,0,"enter AT commands. Some times works WELL",$1b,2*8,0,">", #ff
+curpos		dw	0
+curpx		dw	0
+scrpos		dw	screenaddr
 subtbl		dw	puts,putc,plot,0,0,0,cls,0,get_coords_char
 c_coords	db	0,0
 ytable		include	"ytab.asm"
@@ -547,11 +596,12 @@ xtable		include	"xtab.asm"
 font		include "6x8_1.asm"
 
 esp_init	db	"ATE0",0x0d,0x0a,0
-esp_ip		db	'AT+CIFSR',0x0d,0x0a,0
-esp_myip	db	"AT+CIPSSLSIZE=4096",0X0D,0X0A,0
-esp_con		db	'AT+CIPSTART="SSL","web.telegram.org/#/login",443',0x0d,0x0a,0
-esp_list	db	"AT+CIPSEND=39",$0d,$0a,0
-esp_send	db	"GET /	HTTP/1.1 Host: web.telegram.org",0x0d,0x0a,0 ;39 bytes
+esp_ip		db	'AT',0x0d,0x0a,0
+esp_myip	db	"AT",0X0D,0X0A,0
+esp_con		db	'AT+CIPSTART="TCP","kalin.io",80',0x0d,0x0a,0
+esp_list	db	"AT+CIPSEND=32",$0d,$0a,0
+esp_send	db	"GET / HTTP/1.1",13,10
+		db	"Host: kalin.io",0x0d,0x0a,0 ;32 bytes
 buffer		block	4096,0x20
 ;buffer2	block	2048,0x20
 
