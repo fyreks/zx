@@ -289,7 +289,7 @@ puts
 		jr	.looptxt
 .skp3		ld	a,(de)
 		cp	#0d
-		jr	nz.skp0d
+		jr	nz,.skp0d
 		ld	hl,(curpos)
 		call	inc_y_attr
 		ld	a,(de)
