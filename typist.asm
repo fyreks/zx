@@ -287,7 +287,7 @@ puts
 		call	inc_coords
 		inc	de
 		jr	.looptxt
-.skp3		ld	a,(de)
+.skp3
 		cp	#0d
 		jr	nz,.skp0d
 		ld	hl,(curpos)
