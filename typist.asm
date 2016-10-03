@@ -297,7 +297,9 @@ puts
 		ld	hl,(curpx)
 		ld	b,h
 		ld	c,l
+		push	af
 		call	get_coords_char
+		pop	af
 		ld	h,0
 		ld	l,a
 		add	hl,hl
