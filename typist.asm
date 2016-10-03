@@ -390,14 +390,14 @@ inc_coords
 		inc	l
 		ld	a,l
 		cp	#20
-		jr	nz,.lp1
+		jr	nz,inc_lp1
 inc_y_attr	ld	l,0
 		inc	h
 		ld	a,h
 		cp	24
-		jr	nz,.lp1
+		jr	nz,inc_lp1
 		ld	h,0
-.lp1		ld	(curpos),hl
+inc_lp1		ld	(curpos),hl
 
 
 		ld		a,l
