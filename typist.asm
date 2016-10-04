@@ -116,6 +116,8 @@ test
 	halt
 	di
 	call	UART_READ
+	call	UART_READ
+	call	UART_READ
 
 	ld	a,#ff
 	ld	(hl),a
@@ -208,6 +210,11 @@ init
 		ld	a,3					; select zx standart screen
 		ld	bc,$77
 		out	(c),a
+		ld	hl,0
+		ld	(curpos),hl
+		ld	(curpx),hl
+		ld	hl,$40
+		ld	(scrpos),hl
 		ei
 		ret
 global
@@ -277,6 +284,7 @@ puts
 		ld	a,(de)
 		ld	b,a
 		call	get_coords_char
+		call	at_2_px
 		inc	de		
 		ld	a,(de)				; get next byte to printout
 
@@ -292,8 +300,14 @@ puts
 		jr	nz,.skp0d
 		ld	hl,(curpos)
 		call	inc_y_attr
+		inc	de
 		ld	a,(de)
-.skp0d		inc	de
+
+.skp0d		cp	#0a
+		jr	nz,.skp0a
+		inc	de
+		ld	a,(de)
+.skp0a		inc	de
 		ld	hl,(curpx)
 		ld	b,h
 		ld	c,l
@@ -402,7 +416,7 @@ inc_y_attr	ld	l,0
 inc_lp1		ld	(curpos),hl
 
 
-		ld		a,l
+at_2_px		ld		a,l
 		add		a,a
 		add		a,a
 		add		a,a
@@ -600,10 +614,10 @@ font		include "6x8_1.asm"
 esp_init	db	"ATE0",0x0d,0x0a,0
 esp_ip		db	'AT',0x0d,0x0a,0
 esp_myip	db	"AT",0X0D,0X0A,0
-esp_con		db	'AT+CIPSTART="TCP","kalin.io",80',0x0d,0x0a,0
-esp_list	db	"AT+CIPSEND=32",$0d,$0a,0
+esp_con		db	'AT+CIPSTART="TCP","google.com",80',0x0d,0x0a,0
+esp_list	db	"AT+CIPSEND=34",$0d,$0a,0
 esp_send	db	"GET / HTTP/1.1",13,10
-		db	"Host: kalin.io",0x0d,0x0a,0 ;32 bytes
+		db	"Host: google.com",0x0d,0x0a,0 ;32 bytes
 buffer		block	4096,0x20
 ;buffer2	block	2048,0x20
 
