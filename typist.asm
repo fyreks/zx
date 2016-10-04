@@ -617,7 +617,7 @@ esp_myip	db	"AT",0X0D,0X0A,0
 esp_con		db	'AT+CIPSTART="TCP","google.com",80',0x0d,0x0a,0
 esp_list	db	"AT+CIPSEND=34",$0d,$0a,0
 esp_send	db	"GET / HTTP/1.1",13,10
-		db	"Host: google.com",0x0d,0x0a,0 ;32 bytes
+		db	"Host:google.com",0x0d,0x0a,0 ;32 bytes
 buffer		block	4096,0x20
 ;buffer2	block	2048,0x20
 
