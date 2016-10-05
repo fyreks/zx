@@ -50,23 +50,12 @@ test
 
 	push	hl
 	call	UART_FIFO_RESET	
-	ld	hl,esp_ip			;AT+GMR
+	ld	hl,esp_ip			;AT
 	call	UART_WRITE
 
 	pop	hl
 	call	UART_READ
 	call	UART_READ
-
-	push	hl
-	call	UART_FIFO_RESET	
-	ld	hl,esp_myip		;AT+CIFSR
-	call	UART_WRITE
-
-	pop	hl
-
-	call	UART_READ
-	call	UART_READ
-
 
 	push	hl
 	call	UART_FIFO_RESET	;AT+CIPSTART...
@@ -80,7 +69,7 @@ test
 
 	push	hl
 	call	UART_FIFO_RESET	
-	ld	hl,esp_list
+	ld	hl,esp_list		;AT+CIPSEND
 	call	UART_WRITE
 
 	pop	hl
@@ -91,7 +80,7 @@ test
 	push	hl
 
 	call	UART_FIFO_RESET	
-	ld	hl,esp_send
+	ld	hl,esp_send		;HTTP data
 	call	UART_WRITE
 
 	pop	hl
@@ -99,25 +88,33 @@ test
 	call	UART_READ
 	call	UART_READ
 
+	push	hl
 	call	UART_FIFO_RESET	
+	ld	hl,esp_myip		;AT
+	call	UART_WRITE
+
+	pop	hl
+
 	call	UART_READ
 	call	UART_READ
+
+
+	call	UART_FIFO_RESET	
+
+	ld	b,12
+.h1	push	bc
 	call	UART_READ
+	pop	bc
+	djnz	.h1
+
+	call	UART_FIFO_RESET	
+
+	ld	b,12
+.h2	push	bc
 	call	UART_READ
-	call	UART_READ
-	call	UART_READ
-	call	UART_READ
-	call	UART_READ
-	call	UART_READ
-	call	UART_READ
-	call	UART_READ
-	ei
-	halt
-	halt
-	di
-	call	UART_READ
-	call	UART_READ
-	call	UART_READ
+	pop	bc
+	djnz	.h2
+
 
 	ld	a,#ff
 	ld	(hl),a
@@ -141,9 +138,6 @@ test
 ;	ld	a,8
 ;	call	global
 
-;	ld	de,esp_init
-;	xor	a
-;	call	global
 	
 ;	call	parse
 
@@ -272,7 +266,7 @@ puts
 
 .looptxt
 		ld	a,(de)
-		cp	#ff
+		cp	255
 		ret	z
 		cp	$1b					; if ESC seq. than setup coords
 		jr	nz,.skp2
@@ -285,29 +279,29 @@ puts
 		ld	b,a
 		call	get_coords_char
 		call	at_2_px
-		inc	de		
-		ld	a,(de)				; get next byte to printout
-
-
-.skp2
-		cp	$20
-		jr	nz,.skp3
-		call	inc_coords
 		inc	de
 		jr	.looptxt
-.skp3
+.skp2
 		cp	#0d
 		jr	nz,.skp0d
 		ld	hl,(curpos)
 		call	inc_y_attr
 		inc	de
-		ld	a,(de)
+		jr	.looptxt
 
 .skp0d		cp	#0a
 		jr	nz,.skp0a
 		inc	de
-		ld	a,(de)
-.skp0a		inc	de
+		jr	.looptxt
+.skp0a		
+		cp	$20
+		jr	nz,.skp3
+		call	inc_coords
+		inc	de
+		jr	.looptxt
+.skp3		jr	nc,.looptxt
+
+		inc	de
 		ld	hl,(curpx)
 		ld	b,h
 		ld	c,l
@@ -601,7 +595,7 @@ _putch1:
 
 
 		
-text		db	$1B,0,0,"Franky's ESP Wi-Fi, $ver:0.01",$1b,22*8,0,"enter AT commands. Some times works WELL",$1b,2*8,0,">", #ff
+text		db	$1B,0,21*8,"Franky's ESP Wi-Fi, $ver:0.01",$1b,0,22*8,"enter AT commands. Some times works WELL",$1b,0,0,">", #ff
 curpos		dw	0
 curpx		dw	0
 scrpos		dw	screenaddr
@@ -613,7 +607,7 @@ font		include "6x8_1.asm"
 
 esp_init	db	"ATE0",0x0d,0x0a,0
 esp_ip		db	'AT',0x0d,0x0a,0
-esp_myip	db	"AT",0X0D,0X0A,0
+esp_myip	db	0X0D,0X0A,0
 esp_con		db	'AT+CIPSTART="TCP","saspack.ru",80',0x0d,0x0a,0
 esp_list	db	"AT+CIPSEND=33",$0d,$0a,0
 esp_send	db	"GET / HTTP/1.1",13,10
