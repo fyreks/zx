@@ -609,8 +609,8 @@ esp_init	db	"ATE0",0x0d,0x0a,0
 esp_ip		db	'AT',0x0d,0x0a,0
 esp_myip	db	"AT",0X0D,0X0A,0
 esp_con		db	'AT+CIPSTART="TCP","saspack.ru",80',0x0d,0x0a,0
-esp_list	db	"AT+CIPSEND=47",$0d,$0a,0
-esp_send	db	"GET /httpdocs/s.txt HTTP/1.1",10
+esp_list	db	"AT+CIPSEND=38",$0d,$0a,0
+esp_send	db	"GET /s.txt HTTP/1.1",10
 		db	"Host:saspack.ru",10,0x0d,0x0a,0	; calc those bytes
 buffer		block	4096,0x20
 ;buffer2	block	2048,0x20
