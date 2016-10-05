@@ -299,7 +299,7 @@ puts
 		call	inc_coords
 		inc	de
 		jr	.looptxt
-.skp3		jr	nc,.looptxt
+.skp3		jr	c,.looptxt
 
 		inc	de
 		ld	hl,(curpx)
@@ -595,7 +595,7 @@ _putch1:
 
 
 		
-text		db	$1B,0,21*8,"Franky's ESP Wi-Fi, $ver:0.01",$1b,0,22*8,"enter AT commands. Some times works WELL",$1b,0,0,">", #ff
+text		db	$1B,21*8,0,"Franky's ESP Wi-Fi, $ver:0.01",$1b,22*8,0,"enter AT commands. Some times works WELL",$1b,0,0,">", #ff
 curpos		dw	0
 curpx		dw	0
 scrpos		dw	screenaddr
