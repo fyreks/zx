@@ -10,9 +10,9 @@ main
 	ret						; standart descriptor of zx library - 29 bytes (#1D)
 	db	"graphics library"			; name
 	db	1,0					; $ver
-	dw	codeend-main			; library size
+	dw	codeend-main				; library size
 	dw	init					; init procedure if needed
-	dw	global				; main entry point address
+	dw	global					; main entry point address
 	dw	0					; relocable size
 	dw	0					; relocable table
 ;----------------------------------------------------------------
@@ -33,7 +33,7 @@ main
 ; 5 - setup border&ink color
 ; 6 - clear screen
 ; 7 - clear an area (DE' - coords starting from; DE - x size; push xx - y size)
-; 8 - setup new current coordinates, stored in (scrpos) variable
+; 8 - setup new current coordinates, stores in (scrpos) variable
 ; 9 - moveup whole screen
 ; 10 - move down whole screen
 ; 11 - move an area
@@ -599,7 +599,7 @@ text		db	$1B,21*8,0,"Franky's ESP Wi-Fi, $ver:0.01",$1b,22*8,0,"enter AT command
 curpos		dw	0
 curpx		dw	0
 scrpos		dw	screenaddr
-subtbl		dw	puts,putc,plot,0,0,0,cls,0,get_coords_char
+subtbl		dw	puts,putc,plot,main,main,main,cls,main,get_coords_char
 c_coords	db	0,0
 ytable		include	"ytab.asm"
 xtable		include	"xtab.asm"
