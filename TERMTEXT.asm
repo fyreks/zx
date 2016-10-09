@@ -120,19 +120,29 @@ WAIT
 		JR	Z,OK
 		CP	12
 		JR	NZ,NOBACK
-		LD	A,B
-		OR	A
-		JR	NZ,BACK
-		LD	A,(COORD)
-		CP	C
-		JR	Z,NOBACK
-		DEC	C
-		LD	B,42
+
+
+        LD      A,B
+        OR      A
+        JR      NZ,BACK
+        LD      A,(COORD)
+        CP      C
+        JR      Z,NOBACK
+
+        CALL    DEL_CURSOR
+        DEC     C
+        LD      B,41
+        JR      BACKDW
 BACK
-		CALL	CALCBUF
-		LD	(hl),0
-		DEC	B
+        CALL    DEL_CURSOR
+        DEC     B
+BACKDW
+        CALL    CALCBUF
+        LD      (HL),0
+        CALL    PUTSPACE
 NOBACK
+
+        JR      NOQ
 
 OK
 		CALL	DEL_CURSOR
@@ -141,6 +151,9 @@ OK
 		LD	HL,BUF
 		LD	A,1
 		RET 
+
+
+
 
 QQQ
 		XOR	A	; exit
@@ -957,6 +970,10 @@ PR1	ADD HL,HL
 	LD C,A
 	RET 
 
+
+
+
+
 DEPKFNT	LD HL,FONT
 		LD DE,FONTS
 		LD C,0
@@ -977,6 +994,83 @@ DEPKFN2	RRC (hl)
 		DEC C
 		JR NZ,DEPKFN0
 		RET 
+
+PUTSPACE
+                PUSH    HL
+                PUSH    BC
+                LD      A,C
+                AND     #7
+                RRCA 
+                RRCA 
+                RRCA 
+                LD      L,A
+                LD      H,#50
+                BIT     4,C
+                JR      NZ,PUTSPC_X
+                LD      H,#48
+                BIT     3,C
+                JR      NZ,PUTSPC_X
+                LD      H,#40
+PUTSPC_X
+                LD      A,B
+                AND     #3C
+                RRCA 
+                RRCA 
+                LD      C,A
+                ADD     A,A
+                ADD     A,C
+                ADD     A,L
+                LD      L,A
+
+                LD      A,B
+                LD      C,#03
+                AND     C
+                JR      Z,PUTSPC_1
+                LD      BC,#FC0F
+                DEC     A
+                JR      Z,PUTSPC_2
+                INC     L
+                LD      BC,#F03F
+                DEC     A
+                JR      Z,PUTSPC_2
+                INC     L
+                LD      C,#C0
+PUTSPC_1
+                DUP     7
+                LD      A,(HL)
+                AND     C
+                LD      (HL),A
+                INC     H
+                EDUP 
+                LD      A,(HL)
+                AND     C
+                LD      (HL),A
+                JR      PUTSPC_END
+PUTSPC_2
+                DUP     7
+                LD      A,(HL)
+                AND     B
+                LD      (HL),A
+                INC     L
+                LD      A,(HL)
+                AND     C
+                LD      (HL),A
+                DEC     L
+                INC     H
+                EDUP 
+                LD      A,(HL)
+                AND     B
+                LD      (HL),A
+                INC     L
+                LD      A,(HL)
+                AND     C
+                LD      (HL),A
+PUTSPC_END
+                POP     BC
+                POP     HL
+                RET 
+
+
 
 ISITST	DEC HL
 		LD A,H
