@@ -1,2 +1,4 @@
 #!/bin/bash
-./sjasmplus typist.asm
+cd ~/zx
+./sjasmplus termtext.asm
+
